@@ -21,7 +21,7 @@
       </div>
     </template>
     <template #calendar-cell="{ date }">
-      <CalendarDay  v-if="getDateInfo(date)" :date="date" :info="getDateInfo(date)"/>
+      <CalendarDay v-if="getDateInfo(date)" :date="date" :info="getDateInfo(date)"/>
     </template>
   </Calendar>
 </template>
