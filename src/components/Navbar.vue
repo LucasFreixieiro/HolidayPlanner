@@ -9,6 +9,6 @@
 </template>
 
 <script lang="ts" setup>
-import { NavigationMenu, NavigationMenuList, NavigationMenuItem } from '@/components/ui/navigation-menu';
+import { NavigationMenu, NavigationMenuList } from '@/components/ui/navigation-menu';
 import NavModeToggle from '@/components/NavModeToggle.vue';
 </script>
