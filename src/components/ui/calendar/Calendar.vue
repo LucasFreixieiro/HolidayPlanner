@@ -3,7 +3,7 @@ import type { CalendarRootEmits, CalendarRootProps, DateValue } from "reka-ui"
 import type { HTMLAttributes, Ref } from "vue"
 import type { LayoutTypes } from "."
 import { getLocalTimeZone, today } from "@internationalized/date"
-import { createReusableTemplate, reactiveOmit, useVModel } from "@vueuse/core"
+import { createReusableTemplate, reactiveOmit, useVModel, useWindowSize } from "@vueuse/core"
 import { CalendarRoot, useDateFormatter, useForwardPropsEmits } from "reka-ui"
 import { createYear, createYearRange, toDate } from "reka-ui/date"
 import { computed, toRaw } from "vue"
@@ -40,6 +40,22 @@ const [DefineMonthTemplate, ReuseMonthTemplate] = createReusableTemplate<{ date:
 const [DefineYearTemplate, ReuseYearTemplate] = createReusableTemplate<{ date: DateValue }>()
 
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
+
+const { width } = useWindowSize()
+
+const maxColumnsForWidth = computed(() => {
+  const w = width.value
+  if (w >= 1280) return 6
+  if (w >= 1152) return 5
+  if (w >= 1024) return 4
+  if (w >= 768) return 3
+  if (w >= 640) return 2
+  return 1
+})
+
+const getColumnCount = (monthCount: number) => {
+  return Math.min(monthCount, maxColumnsForWidth.value)
+}
 </script>
 
 <template>
@@ -129,7 +145,10 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       </slot>
     </CalendarHeader>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-4 justify-items-center">
+    <div
+      class="grid gap-4 mt-4 justify-items-center justify-center"
+      :style="{ gridTemplateColumns: `repeat(${getColumnCount(grid.length)}, minmax(0, 16rem))` }"
+    >
       <CalendarGrid class="w-50 flex-shrink-0" v-for="month in grid" :key="month.value.toString()">
         <CalendarGridHead>
           <slot name="calendar-grid-heading" :month="month" ></slot>

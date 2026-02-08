@@ -1,0 +1,39 @@
+<script setup lang="ts">
+import { Icon } from '@iconify/vue'
+import { useColorMode } from '@vueuse/core'
+import { NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink } from '@/components/ui/navigation-menu'
+
+// Pass { disableTransition: false } to enable transitions
+const mode = useColorMode()
+</script>
+
+<template>
+  <NavigationMenuItem>
+    <NavigationMenuTrigger>
+      <Icon icon="radix-icons:moon" class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Icon icon="radix-icons:sun" class="h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <span class="ml-2">Toggle Mode</span>
+    </NavigationMenuTrigger>
+    <NavigationMenuContent>
+      <ul class="grid w-[200px] gap-4">
+        <li>
+          <NavigationMenuLink as-child>
+            <a @click="mode = 'light'">
+              Light
+            </a>
+          </NavigationMenuLink>
+          <NavigationMenuLink as-child>
+            <a @click="mode = 'dark'">
+              Dark
+            </a>
+          </NavigationMenuLink>
+          <NavigationMenuLink as-child>
+            <a @click="mode = 'auto'">
+              Auto
+            </a>
+          </NavigationMenuLink>
+        </li>
+      </ul>
+    </NavigationMenuContent>
+  </NavigationMenuItem>
+</template>
