@@ -96,7 +96,7 @@ export async function getPublicHolidaysForYear(
     const data: PublicHoliday[] = await response.json();
 
     // Transform API response to DateValue[] format
-    const holidays: DateValue[] = data.map((holiday: any) => {
+    const holidays: DateValue[] = data.filter((date) => date.global == true && date.types.includes("Public")).map((holiday: any) => {
       const [y, m, d] = holiday.date.split('-').map(Number);
       return new CalendarDate(y, m, d);
     });
