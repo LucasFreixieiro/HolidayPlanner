@@ -41,21 +41,17 @@
           <Field orientation="vertical">
             <FieldLabel>Country</FieldLabel>
             <FieldContent>
-              <NativeSelect v-model="country" class="w-full md:w-1/2">
-                <NativeSelectOption value="">Select a country</NativeSelectOption>
-                <NativeSelectOption value="US">United States</NativeSelectOption>
-                <NativeSelectOption value="CA">Canada</NativeSelectOption>
-                <NativeSelectOption value="GB">United Kingdom</NativeSelectOption>
-                <NativeSelectOption value="DE">Germany</NativeSelectOption>
-                <NativeSelectOption value="FR">France</NativeSelectOption>
-                <NativeSelectOption value="ES">Spain</NativeSelectOption>
-                <NativeSelectOption value="IT">Italy</NativeSelectOption>
-                <NativeSelectOption value="AU">Australia</NativeSelectOption>
-                <NativeSelectOption value="NZ">New Zealand</NativeSelectOption>
-                <NativeSelectOption value="JP">Japan</NativeSelectOption>
-                <NativeSelectOption value="IN">India</NativeSelectOption>
-                <NativeSelectOption value="BR">Brazil</NativeSelectOption>
-                <NativeSelectOption value="MX">Mexico</NativeSelectOption>
+              <NativeSelect v-model="country" class="w-full" :disabled="loadingCountries">
+                <NativeSelectOption value="">
+                  {{ loadingCountries ? 'Loading countries...' : 'Select a country' }}
+                </NativeSelectOption>
+                <NativeSelectOption 
+                  v-for="c in countries" 
+                  :key="c.countryCode" 
+                  :value="c.countryCode"
+                >
+                  {{ c.name }}
+                </NativeSelectOption>
               </NativeSelect>
               <FieldDescription>
                 Used to automatically load public holidays
@@ -68,13 +64,7 @@
             <FieldContent>
               <div class="space-y-2">
                 <div class="flex gap-2">
-                  <input
-                    v-model="newHoliday"
-                    type="text"
-                    placeholder="Enter holiday name (e.g., Company Day Off)"
-                    class="border-input placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 dark:hover:bg-input/50 h-9 flex-1 min-w-0 rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                    @keyup.enter="addHoliday"
-                  />
+                  <DatePicker v-model="newHoliday" placeholder="Select holiday date" />
                   <button
                     type="button"
                     @click="addHoliday"
@@ -142,7 +132,7 @@
                   Add
                 </button>
               </div>
-              <div v-if="unavailableDates.length > 0" class="flex flex-wrap gap-2 mt-3">
+              <!-- <div v-if="unavailableDates.length > 0" class="flex flex-wrap gap-2 mt-3">
                 <span
                   v-for="(date, index) in unavailableDates"
                   :key="index"
@@ -170,7 +160,7 @@
                     </svg>
                   </button>
                 </span>
-              </div>
+              </div> -->
             </div>
             <FieldDescription>
               Important meetings, deadlines, or other commitments
@@ -231,9 +221,10 @@
         </button>
         <button
           type="submit"
+          :disabled="loadingHolidays"
           class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6"
         >
-          Find Optimal Dates
+          {{ loadingHolidays ? 'Loading holidays...' : 'Find Optimal Dates' }}
         </button>
       </div>
     </form>
@@ -241,29 +232,51 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { CalendarDate, type DateValue } from '@internationalized/date'
+import { ref, watch } from 'vue';
 import { NativeSelectOption, NativeSelect } from "@/components/ui/native-select";
 import { Field, FieldLabel, FieldDescription, FieldContent } from "@/components/ui/field";
 import { DatePicker } from "@/components/ui/calendar";
+import { getAvailableCountries, getPublicHolidays } from '@/services/HolidayApi';
+import type { Country } from '@/services/HolidayApi';
 
 // Form data
-const startDate = ref<Date | undefined>();
-const endDate = ref<Date | undefined>();
+const startDate = ref<DateValue | undefined>();
+const endDate = ref<DateValue | undefined>();
 const country = ref('');
-const holidays = ref<string[]>([]);
-const unavailableDates = ref<Date[]>([]);
+const countries = ref<Country[]>([]);
+const holidays = ref<DateValue[]>([]);
+const unavailableDates = ref<DateValue[]>([]);
 const numberOfDaysOff = ref(0);
 const includeWeekends = ref(false);
 
+// Loading states
+const loadingCountries = ref(false);
+const loadingHolidays = ref(false);
+
+// Load countries
+loadingCountries.value = true;
+getAvailableCountries().then((data) => {
+  countries.value = data;
+})
+.catch((error) => {
+  console.error(`Failed to load countries: ${error}`)
+})
+.finally(() => {
+  loadingCountries.value = false;
+});
+
 // Temporary input values
-const newHoliday = ref('');
-const newUnavailableDate = ref<Date | undefined>();
+const newHoliday = ref<DateValue | undefined>();
+const newUnavailableDate = ref<DateValue | undefined>();
 
 // Holiday management
 const addHoliday = () => {
-  if (newHoliday.value.trim()) {
-    holidays.value.push(newHoliday.value.trim());
-    newHoliday.value = '';
+  console.log("here")
+  if (newHoliday.value) {
+    console.log(newHoliday.value)
+    holidays.value.push(newHoliday.value);
+    newHoliday.value = undefined;
   }
 };
 
@@ -291,6 +304,30 @@ const formatDate = (date: Date) => {
     day: 'numeric',
   });
 };
+
+
+watch([country, startDate, endDate], async ([c, s, e]) => {
+  if(!c) {
+    holidays.value = [];
+    return;
+  }
+
+  const fromYear = s?.year ?? new Date().getFullYear();
+  const toYear = e?.year ?? fromYear;
+  const years = Array.from(new Set([fromYear, toYear]));
+  
+  loadingHolidays.value = true;
+  getPublicHolidays(c, years)
+  .then((publicHolidays) => {
+    holidays.value = publicHolidays;
+  })
+  .catch((error) => {
+    console.error(`Failed to load public holidays: ${error}`);
+  })
+  .finally(() => {
+    loadingHolidays.value = false;
+  });
+});
 </script>
 
 <!-- const formSchema = z.object({

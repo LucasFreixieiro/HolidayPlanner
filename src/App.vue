@@ -57,7 +57,7 @@ function handleDateSelected(selectedDates: DateValue[]) {
   <Card class="m-10 w-auto">
     <HolidayOptions />
   </Card>
-  <HolidayCalendar :dates="dates as DateInfo[]" :startDate="startDate" :endDate="endDate" @date-selected="handleDateSelected"/>
+  <HolidayCalendar class="bg-card text-card-foreground m-10" :startDate="startDate" :endDate="endDate" @date-selected="handleDateSelected" :dates="dates as DateInfo[]"></HolidayCalendar>
 </template>
 
 <style scoped>

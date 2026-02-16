@@ -1,6 +1,6 @@
 <template>
   <Calendar
-      class="rounded-md border shadow-sm"
+      :class="cn('rounded-md border shadow-sm', props.class)"
       :placeholder="startDate"
       :multiple="true"
       :numberOfMonths="numberOfMonths"
@@ -28,23 +28,27 @@
 
 <script setup lang="ts">
 import { useDateFormatter } from "reka-ui"
+import type { HTMLAttributes } from "vue"
 import type { DateValue, PrimitiveProps } from "reka-ui"
 import type { DateInfo } from "@/types"
 import { toDate } from "reka-ui/date"
 import { Calendar, CalendarDay } from "@/components/ui/calendar";
 import { isWeekend, today, getLocalTimeZone, CalendarDate } from '@internationalized/date';
 import { computed } from "vue";
+import { cn } from "@/lib/utils"
 
 export interface HolidayCalendarProps extends PrimitiveProps {
+  class: HTMLAttributes["class"];
   startDate?: CalendarDate;
   endDate?: CalendarDate;
   dates: DateInfo[];
 }
+
 const props = withDefaults(defineProps<HolidayCalendarProps>(), {
   startDate: () =>today(getLocalTimeZone()).set({ month: 1, day: 1 }),
   endDate: () => today(getLocalTimeZone()).set({ month: 12, day: 31 }),
   dates: () => []
-})
+});
 
 const emit = defineEmits<{
   (e: 'date-selected', dates: DateValue[]): void;
