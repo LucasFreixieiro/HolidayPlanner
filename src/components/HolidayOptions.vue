@@ -232,7 +232,7 @@
 </template>
 
 <script setup lang="ts">
-import { CalendarDate, type DateValue } from '@internationalized/date'
+import { type DateValue } from '@internationalized/date'
 import { ref, watch } from 'vue';
 import { NativeSelectOption, NativeSelect } from "@/components/ui/native-select";
 import { Field, FieldLabel, FieldDescription, FieldContent } from "@/components/ui/field";
@@ -292,18 +292,18 @@ const addUnavailableDate = () => {
   }
 };
 
-const removeUnavailableDate = (index: number) => {
-  unavailableDates.value.splice(index, 1);
-};
+// const removeUnavailableDate = (index: number) => {
+//   unavailableDates.value.splice(index, 1);
+// };
 
-// Utility function
-const formatDate = (date: Date) => {
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-};
+// // Utility function
+// const formatDate = (date: Date) => {
+//   return date.toLocaleDateString('en-US', {
+//     year: 'numeric',
+//     month: 'short',
+//     day: 'numeric',
+//   });
+// };
 
 
 watch([country, startDate, endDate], async ([c, s, e]) => {
