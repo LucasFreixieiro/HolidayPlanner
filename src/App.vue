@@ -1,36 +1,30 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import HolidayCalendar from '@/components/HolidayCalendar.vue'
-import type { DateIndicator, DateInfo } from './types';
+import type { DateInfo } from './types';
 import { CalendarDate } from '@internationalized/date';
 import type { DateValue } from "reka-ui"
 import HolidayOptions from '@/components/HolidayOptions.vue';
 import { Card } from '@/components/ui/card';
 import Navbar from '@/components/Navbar.vue';
+import { useHolidayPlanner } from './composables/useHolidayPlanner';
+import { DefaultHolidayIndicator } from '@/data/indicators';
+
+const { holidays } = useHolidayPlanner();
 
 const startDate = new CalendarDate(2026, 1, 1);
 
 const endDate = new CalendarDate(2026, 12, 31);
 
-const PublicHolidayIndicator: DateIndicator = {
-  id: "public-holiday",
-  color: "bg-red-500",
-  label: "Public Holiday",
-};
-
-const DefaultHolidayIndicator: DateIndicator = {
-  id: "pto",
-  color: "bg-gray-500",
-  label: "PTO Indicator",
-};
-
-const PublicHolidays: DateInfo[] = [
-  { date: new CalendarDate(startDate.year, 1, 1), indicators: [PublicHolidayIndicator, DefaultHolidayIndicator], tooltip: 'New Year\'s Day' },
-  { date: new CalendarDate(startDate.year, 4, 25), indicators: [PublicHolidayIndicator], tooltip: 'Revolution Day' },
-  { date: new CalendarDate(startDate.year, 12, 25), indicators: [PublicHolidayIndicator], tooltip: 'Christmas Day' },
-];
-
-const dates = ref<DateInfo[]>([...PublicHolidays]);
+const dates = computed({
+  get() {
+    const _holidays = holidays.value as DateInfo[];
+    return [...new Set([..._holidays])];
+  },
+  set(value) {
+    holidays.value = value;
+  }
+});
 
 function handleDateSelected(selectedDates: DateValue[]) {
   let newDatesArr = [...dates.value as DateInfo[]];

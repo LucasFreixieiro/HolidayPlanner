@@ -67,7 +67,7 @@
                   <DatePicker v-model="newHoliday" placeholder="Select holiday date" />
                   <button
                     type="button"
-                    @click="addHoliday"
+                    @click="handleAddHoliday"
                     class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4"
                   >
                     Add
@@ -79,7 +79,7 @@
                     :key="index"
                     class="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-sm"
                   >
-                    {{ holiday }}
+                    {{ holiday.date }}
                     <button
                       type="button"
                       @click="removeHoliday(index)"
@@ -126,7 +126,7 @@
                 />
                 <button
                   type="button"
-                  @click="addUnavailableDate"
+                  @click="handleAddUnavailableDate"
                   class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4"
                 >
                   Add
@@ -233,20 +233,18 @@
 
 <script setup lang="ts">
 import { type DateValue } from '@internationalized/date'
-import { ref, watch } from 'vue';
+import { provide, ref, watch } from 'vue';
 import { NativeSelectOption, NativeSelect } from "@/components/ui/native-select";
 import { Field, FieldLabel, FieldDescription, FieldContent } from "@/components/ui/field";
 import { DatePicker } from "@/components/ui/calendar";
 import { getAvailableCountries, getPublicHolidays } from '@/services/HolidayApi';
 import type { Country } from '@/services/HolidayApi';
+import { useHolidayPlanner } from '@/composables/useHolidayPlanner';
+const { startDate, endDate, holidays, unavailableDates, addHoliday, removeHoliday, addUnavailableDate } = useHolidayPlanner();
 
 // Form data
-const startDate = ref<DateValue | undefined>();
-const endDate = ref<DateValue | undefined>();
 const country = ref('');
 const countries = ref<Country[]>([]);
-const holidays = ref<DateValue[]>([]);
-const unavailableDates = ref<DateValue[]>([]);
 const numberOfDaysOff = ref(0);
 const includeWeekends = ref(false);
 
@@ -270,41 +268,19 @@ getAvailableCountries().then((data) => {
 const newHoliday = ref<DateValue | undefined>();
 const newUnavailableDate = ref<DateValue | undefined>();
 
-// Holiday management
-const addHoliday = () => {
-  console.log("here")
+const handleAddHoliday = () => {
   if (newHoliday.value) {
-    console.log(newHoliday.value)
-    holidays.value.push(newHoliday.value);
+    addHoliday(newHoliday.value);
     newHoliday.value = undefined;
   }
 };
 
-const removeHoliday = (index: number) => {
-  holidays.value.splice(index, 1);
-};
-
-// Unavailable dates management
-const addUnavailableDate = () => {
+const handleAddUnavailableDate = () => {
   if (newUnavailableDate.value) {
-    unavailableDates.value.push(newUnavailableDate.value);
+    addUnavailableDate(newUnavailableDate.value);
     newUnavailableDate.value = undefined;
   }
 };
-
-// const removeUnavailableDate = (index: number) => {
-//   unavailableDates.value.splice(index, 1);
-// };
-
-// // Utility function
-// const formatDate = (date: Date) => {
-//   return date.toLocaleDateString('en-US', {
-//     year: 'numeric',
-//     month: 'short',
-//     day: 'numeric',
-//   });
-// };
-
 
 watch([country, startDate, endDate], async ([c, s, e]) => {
   if(!c) {

@@ -1,6 +1,7 @@
 import { CalendarDate } from '@internationalized/date';
-import type { DateValue } from '@internationalized/date';
 import { persistentCache } from './cache';
+import type { DateInfo } from '@/types';
+import { PublicHolidayIndicator } from '@/data/indicators';
 
 const BASE_URL = 'https://date.nager.at/api/v3';
 
@@ -71,16 +72,20 @@ export async function getAvailableCountries(): Promise<Country[]> {
 export async function getPublicHolidaysForYear(
   countryCode: string,
   year: number
-): Promise<DateValue[]> {
+): Promise<DateInfo[]> {
   const cacheKey = `holidays_${countryCode}_${year}`;
 
   // Check cache first
-  const cached = persistentCache.get<DateValue[]>(cacheKey);
+  const cached = persistentCache.get<DateInfo[]>(cacheKey);
   if (cached) {
     console.log(`Cache hit: ${cacheKey}`);
     // Convert cached data back to CalendarDate objects
-    return cached.map((date: any) => 
-      new CalendarDate(date.year, date.month, date.day)
+    return cached.map((holiday: DateInfo) => 
+      new Object({
+        date: new CalendarDate(holiday.date.year, holiday.date.month, holiday.date.day),
+        indicators: holiday.indicators,
+        tooltip: holiday.tooltip
+      }) as DateInfo
     );
   }
 
@@ -96,16 +101,24 @@ export async function getPublicHolidaysForYear(
     const data: PublicHoliday[] = await response.json();
 
     // Transform API response to DateValue[] format
-    const holidays: DateValue[] = data.filter((date) => date.global == true && date.types.includes("Public")).map((holiday: any) => {
+    const holidays: DateInfo[] = data.filter((date) => date.global == true && date.types.includes("Public")).map((holiday: any) => {
       const [y, m, d] = holiday.date.split('-').map(Number);
-      return new CalendarDate(y, m, d);
+      return new Object({
+        date: new CalendarDate(y, m, d),
+        indicators: [PublicHolidayIndicator],
+        tooltip: holiday.localName
+      }) as DateInfo;
     });
 
-    // Store in cache (serialize CalendarDate objects)
-    const serializedHolidays = holidays.map((date) => ({
-      year: date.year,
-      month: date.month,
-      day: date.day,
+    // Store in cache
+    const serializedHolidays = holidays.map((holiday) => ({
+      date: {
+        year: holiday.date.year,
+        month: holiday.date.month,
+        day: holiday.date.day,
+      },
+      indicators: holiday.indicators,
+      tooltip: holiday.tooltip
     }));
     persistentCache.set(cacheKey, serializedHolidays, CACHE_TTL.HOLIDAYS);
 
@@ -126,7 +139,7 @@ export async function getPublicHolidaysForYear(
 export async function getPublicHolidays(
   countryCode: string,
   years: number[]
-): Promise<DateValue[]> {
+): Promise<DateInfo[]> {
   // Fetch all years in parallel
   const results = await Promise.all(
     years.map((year) => getPublicHolidaysForYear(countryCode, year))
