@@ -233,14 +233,14 @@
 
 <script setup lang="ts">
 import { type DateValue } from '@internationalized/date'
-import { provide, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { NativeSelectOption, NativeSelect } from "@/components/ui/native-select";
 import { Field, FieldLabel, FieldDescription, FieldContent } from "@/components/ui/field";
 import { DatePicker } from "@/components/ui/calendar";
 import { getAvailableCountries, getPublicHolidays } from '@/services/HolidayApi';
 import type { Country } from '@/services/HolidayApi';
 import { useHolidayPlanner } from '@/composables/useHolidayPlanner';
-const { startDate, endDate, holidays, unavailableDates, addHoliday, removeHoliday, addUnavailableDate } = useHolidayPlanner();
+const { startDate, endDate, holidays, addHoliday, removeHoliday, addUnavailableDate } = useHolidayPlanner();
 
 // Form data
 const country = ref('');
